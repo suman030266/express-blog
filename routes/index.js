@@ -4,7 +4,7 @@ const Post = require('../models/post.js');
 module.exports = function (app){
 	// index
 	app.get('/', function(req, res){
-		Post.get(null, function (err, posts) {
+		Post.getAll(null, function (err, posts) {
 			let data = {
 				title: '主页',
 				user: req.session.user,
@@ -129,7 +129,61 @@ module.exports = function (app){
 			res.redirect('/');//发表成功跳转到主页
 		});
 	});
-	
+	//upload get
+	app.get('/upload', checkLogin, function (req, res) {
+		let data = {
+			title: '文件上传',
+			user: req.session.user,
+			success: req.flash('success').toString(),
+			error: req.flash('error').toString()
+		};
+		res.render('upload', data);
+	});
+	//upload post
+	app.post('/upload', checkLogin, function (req, res) {
+		req.flash('success', '文件上传成功!');
+		res.redirect('/upload');
+	});
+	//获取某人的所有文章
+	app.get('/u/:name', function (req, res) {
+		//检查用户是否存在
+		User.get(req.params.name, function (err, user) {
+			if (!user) {
+				req.flash('error', '用户不存在!'); 
+				return res.redirect('/');//用户不存在则跳转到主页
+			}
+			//查询并返回该用户的所有文章
+			Post.getAll(user.name, function (err, posts) {
+				if (err) {
+					req.flash('error', err); 
+					return res.redirect('/');
+				}
+				res.render('user', {
+					title: user.name,
+					posts: posts,
+					user : req.session.user,
+					success : req.flash('success').toString(),
+					error : req.flash('error').toString()
+				});
+			});
+		}); 
+	});
+	//获取某人某天某个标题的文章
+	app.get('/u/:name/:day/:title', function (req, res) {
+		Post.getOne(req.params.name, req.params.day, req.params.title, function (err, post) {
+			if (err) {
+				req.flash('error', err); 
+				return res.redirect('/');
+			}
+			res.render('article', {
+				title: req.params.title,
+				post: post,
+				user: req.session.user,
+				success: req.flash('success').toString(),
+				error: req.flash('error').toString()
+			});
+		});
+	});
 	//较验是否登录
 	function checkLogin(req, res, next) {
 		if (!req.session.user) {

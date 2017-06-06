@@ -9,6 +9,7 @@ const { db, host, port, cookieSecret } = require('./settings');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const flash = require('connect-flash');
+const multer  = require('multer');
 
 //创建一个express实例
 let app = express();
@@ -22,6 +23,14 @@ app.use(session({
 		host,
 		port
 	})
+}));
+
+//增加文件上传功能
+app.use(multer({
+	dest: './public/uploads',
+	rename: function (fieldname, filename) {
+		return filename;
+	}
 }));
 
 //设置模板路径以及用什么方式解析模板
