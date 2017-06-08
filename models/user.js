@@ -1,4 +1,5 @@
 const mongodb = require('./db');
+const crypto = require('crypto');
 
 function User(user) {
 	this.name = user.name;
@@ -8,11 +9,17 @@ function User(user) {
 
 //存储用户信息
 User.prototype.save = function(callback) {
-	//要存入数据库的用户文档
-	var user = {
+	
+	let md5 = crypto.createHash('md5'),
+		email_MD5 = md5.update(this.email.toLowerCase()).digest('hex'),
+		head = "http://www.gravatar.com/avatar/" + email_MD5 + "?s=48";
+		console.log(head);
+	//要存入数据库的用户信息文档
+	let user = {
 		name: this.name,
 		password: this.password,
-		email: this.email
+		email: email_MD5,
+		head: head
 	};
 	//打开数据库
 	mongodb.open(function (err, db) {

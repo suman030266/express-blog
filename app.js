@@ -10,6 +10,9 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const flash = require('connect-flash');
 const multer  = require('multer');
+const fs = require('fs');
+const accessLog = fs.createWriteStream('access.log', {flags: 'a'});
+const errorLog = fs.createWriteStream('error.log', {flags: 'a'});
 
 //创建一个express实例
 let app = express();
@@ -37,11 +40,22 @@ app.use(multer({
 app.set('views', __dirname + '/views')
 app.set('view engine', 'ejs');
 
+//日志
+app.use(logger('dev'));
+app.use(logger({stream: accessLog}));
+
 //flash闪存
 app.use(flash());
 
 //favicon
 app.use(favicon(__dirname + '/public/favicon.ico'));
+
+//添加了日志的功能 将错误信息保存到error.log
+app.use(function (err, req, res, next) {
+	var meta = '[' + new Date() + '] ' + req.url + '\n';
+	errorLog.write(meta + err.stack + '\n');
+	next();
+});
 
 //app use 中间件
 app.use(bodyParser.json());
